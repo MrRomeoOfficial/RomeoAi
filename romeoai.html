@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <title>RomeoAI 💬</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --text-dark: #f1f5f9;
+      --bg-light: #f1f5f9;
+      --text-light: #0f172a;
+      --input-light: #e0f2fe;
+    }
+    [data-theme="dark"] {
+      --bg: var(--bg-dark);
+      --text: var(--text-dark);
+      --input-bg: #1e293b;
+      --input-color: #f8fafc;
+    }
+    [data-theme="light"] {
+      --bg: var(--bg-light);
+      --text: var(--text-light);
+      --input-bg: var(--input-light);
+      --input-color: #0f172a;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+    body, html {
+      height: 100%;
+    }
+    body {
+      background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=80');
+      background-size: cover;
+      background-position: center;
+      backdrop-filter: blur(8px);
+      color: var(--text);
+    }
+    #container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    h1 {
+      font-size: 32px;
+      font-weight: 600;
+      color: #3b82f6;
+      margin: 10px;
+    }
+    #theme-toggle {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: none;
+      background: #3b82f6;
+      color: white;
+      cursor: pointer;
+    }
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 10px;
+      padding-bottom: 90px;
+    }
+    .msg {
+      padding: 12px 16px;
+      border-radius: 20px;
+      max-width: 75%;
+      word-wrap: break-word;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      animation: bubbleIn 0.4s ease;
+    }
+    .user { background: #2563eb; align-self: flex-end; text-align: right; font-weight: 500; color: white; }
+    .bot  { background: #1e40af; align-self: flex-start; font-weight: 500; color: white; }
+    #typing {
+      color: #93c5fd;
+      font-style: italic;
+      margin: 5px 10px;
+      display: none;
+    }
+    #input-area {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      padding: 10px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(10px);
+    }
+    input {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px 0 0 8px;
+      font-size: 16px;
+      background-color: var(--input-bg);
+      color: var(--input-color);
+    }
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 0 8px 8px 0;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    button.sending {
+      background: #60a5fa;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(96, 165, 250, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0); }
+    }
+    @keyframes bubbleIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    audio {
+      margin: 10px;
+      width: 100%;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <button id="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
+    <h1>🤖 RomeoAI</h1>
+    <audio autoplay loop controls>
+      <source src="https://cdn.prinsh.com/data-1/mp3/alan-walker_alone-remix.mp3" type="audio/mpeg">
+      Your browser does not support the audio element.
+    </audio>
+    <div id="chat"></div>
+    <div id="typing">RomeoAI is thinking...</div>
+  </div>
+  <div id="input-area">
+    <input id="input" placeholder="Type a message..." />
+    <button id="sendBtn" onclick="send()">Send</button>
+  </div>
+
+  <script>
+    const chat = document.getElementById('chat');
+    const input = document.getElementById('input');
+    const typing = document.getElementById('typing');
+    const sendBtn = document.getElementById('sendBtn');
+    const html = document.documentElement;
+
+    function toggleTheme() {
+      html.dataset.theme = html.dataset.theme === 'light' ? 'dark' : 'light';
+    }
+
+    function addMessage(text, sender) {
+      const msg = document.createElement('div');
+      msg.className = 'msg ' + sender;
+      msg.textContent = text;
+      chat.appendChild(msg);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function send() {
+      const text = input.value.trim();
+      if (!text) return;
+      addMessage(text, 'user');
+      input.value = '';
+      typing.style.display = 'block';
+      sendBtn.classList.add('sending');
+      try {
+        const url = `https://nirkyy-dev.hf.space/api/v1/gemmachat?user=User123&system=${encodeURIComponent("You are RomeoAi , created by Mr Romeo to help people . You may use emojies and custom fonts and - or anything you like .")}&prompt=${encodeURIComponent(text)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const reply = data?.data?.response || 'No response';
+        addMessage(reply, 'bot');
+      } catch (e) {
+        addMessage('⚠️ Error contacting RomeoAI.', 'bot');
+      } finally {
+        typing.style.display = 'none';
+        sendBtn.classList.remove('sending');
+      }
+    }
+  </script>
+</body>
+</html>
